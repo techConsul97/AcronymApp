@@ -2,6 +2,7 @@ package com.sebqv97.acronymapp.data.repository
 
 import android.util.Log
 import com.sebqv97.acronymapp.common.Constants
+import com.sebqv97.acronymapp.common.ErrorTypes
 import com.sebqv97.acronymapp.common.utils.Resource
 import com.sebqv97.acronymapp.data.local.AcronymDao
 import com.sebqv97.acronymapp.data.local.entities.WordFormsEntity
@@ -30,44 +31,40 @@ class AcronymRepository @Inject constructor(
             emit(Resource.Success(data = wordFromDb!!.toWordFormsItem()))
         }else{
             try {
+                val responseEntity:WordFormsEntity
                 val apiResponse = when(queryType){
                     Constants.API_GET_ABBREVIATION -> api.getWordFromApi(providedLongForm = searchedWord)
                     Constants.API_GET_LONG_FORM -> api.getWordFromApi(providedShortForm = searchedWord)
-                    else -> emit(Resource.Error("There is a problem with calling the API"))
+                    else -> emit(Resource.Error(ErrorTypes.ApiQueryTypeError()))
                 }as Response<List<WordFormsItemDto>>
                 if(apiResponse.isSuccessful){
-                    apiResponse.body().let {
-                        //insert the new data to dataBase
-                        val responseEntity = it!![0].toWordEntity()
+                    if(apiResponse.body().isNullOrEmpty()) emit(Resource.Error(ErrorTypes.EmptyQuery()))
+                    else {
+                        apiResponse.body().let {
+                            //insert the new data to dataBase
+                            responseEntity = it!![0].toWordEntity()
+                            dao.insertWordForms(responseEntity)
+                        }
 
-                        dao.insertWordForms(WordFormsEntity("ss", listOf()))
-                        dao.insertWordForms(WordFormsEntity("sf", listOf()))
-                        dao.insertWordForms(WordFormsEntity("s3rwer", listOf()))
-                        dao.insertWordForms(WordFormsEntity("dfs", listOf()))
-                        dao.insertWordForms(responseEntity)
-                    }
-
-                    //after insert, as we want to stay with the Single-Source-Trush principle, look again in the db and transmit it
-                     wordFromDb = dao.getWordFromDb(searchedWord)
-                    if(wordFromDb == null)
-                        //emit(Resource.Error("The insert of the word worked, but the retrieving from DB failed"))
-                      //  WorkAROUND
-                        emit(Resource.Success(apiResponse.body()!![0].toWordFormsItem()))
-                    else{
-                        emit(Resource.Success(wordFromDb.let{it!!.toWordFormsItem()}))
-                        wordFromDb = null
+                        //after insert, as we want to stay with the Single-Source-Trush principle, look again in the db and transmit it
+                        wordFromDb = dao.getWordFromDb(responseEntity.shortForm)
+                        if (wordFromDb == null)
+                        //   emit(Resource.Error("The insert of the word worked, but the retrieving from DB failed"))
+                        else {
+                            emit(Resource.Success(wordFromDb.let { it!!.toWordFormsItem() }))
+                            wordFromDb = null
+                        }
                     }
 
                 }
 
             }catch (e:HttpException){
-                emit(Resource.Error(e.localizedMessage ?: "Problem regarding your HttpRequest"))
+                val errorCode = e.code()
+                emit(Resource.Error(ErrorTypes.ProblematicHttpRequest(errorCode)))
             }catch (e:IOException){
-                emit(Resource.Error(message = "Couldn't reach the server... Check your Internet Connection"))
+                emit(Resource.Error(ErrorTypes.InternetConnectionFailed()))
             }
         }
-
-
     }
 
 

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AcronymApp</string>
+    <string name="search_word_hint">Search word</string>
 </resources>

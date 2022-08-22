@@ -14,5 +14,5 @@ interface AcronymDao {
     suspend fun insertWordForms(wordFormsEntity: WordFormsEntity)
 
     @Query("SELECT * FROM acronym_table WHERE shortForm = :searchedWord OR longForms LIKE :searchedWord")
-    suspend fun getWordFromDb(searchedWord:String):WordFormsEntity?
+     fun getWordFromDb(searchedWord:String):WordFormsEntity
 }

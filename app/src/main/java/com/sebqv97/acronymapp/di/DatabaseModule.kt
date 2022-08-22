@@ -20,7 +20,8 @@ object DatabaseModule {
             context,
             AcronymDatabase::class.java,
             "acronym_db"
-        ).build()
+        ).allowMainThreadQueries()
+            .build()
 
         @Provides
         fun provideDatabaseDao(database: AcronymDatabase ) = database.acronymDao()

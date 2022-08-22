@@ -1,5 +1,6 @@
 package com.sebqv97.acronymapp.domain.use_cases.get_words
 
+import com.sebqv97.acronymapp.common.ErrorTypes
 import com.sebqv97.acronymapp.common.utils.Resource
 import com.sebqv97.acronymapp.domain.model.WordFormsItem
 import com.sebqv97.acronymapp.domain.repository.IAcronymRepository
@@ -16,7 +17,9 @@ class Get_Words @Inject constructor(
 
             suspend operator fun invoke(querytype:String, searchedWord: String): Flow<Resource<WordFormsItem>> {
                 if(searchedWord.isBlank()) {
-                    return flow {  }
+                  return flow{
+                      emit(Resource.Error(ErrorTypes.EmptySearchField()))
+                  }
                 }
                 return repository.getWordsFromDataSource(queryType = querytype, searchedWord = searchedWord)
             }
