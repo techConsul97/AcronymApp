@@ -13,6 +13,7 @@ import com.sebqv97.acronymapp.common.UseCases
 import com.sebqv97.acronymapp.common.utils.Resource
 import com.sebqv97.acronymapp.common.utils.getWordsUseCaseErrorHandler
 import com.sebqv97.acronymapp.common.utils.removeWhiteSpaces
+import com.sebqv97.acronymapp.common.utils.validatePassword
 import com.sebqv97.acronymapp.databinding.ActivityMainBinding
 import com.sebqv97.acronymapp.domain.model.WordFormsItem
 import com.sebqv97.acronymapp.presentation.WordFormsItemViewModel
@@ -36,6 +37,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        val passWords = listOf("","dfs","sdffffs1","1Adsff.sdf")
+        for (password in passWords)
+            Log.d("Password $password is: ",validatePassword(password).toString())
     }
 
     override fun onResume() {
