@@ -13,6 +13,6 @@ interface AcronymDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWordForms(wordFormsEntity: WordFormsEntity)
 
-    @Query("SELECT * FROM acronym_table WHERE shortForm = :searchedWord OR longForms LIKE :searchedWord")
+    @Query("SELECT * FROM acronym_table WHERE shortForm LIKE :searchedWord" + " OR  longForms LIKE :searchedWord")
      fun getWordFromDb(searchedWord:String):WordFormsEntity
 }

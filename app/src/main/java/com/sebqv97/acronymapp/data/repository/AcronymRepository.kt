@@ -49,7 +49,7 @@ class AcronymRepository @Inject constructor(
                         //after insert, as we want to stay with the Single-Source-Trush principle, look again in the db and transmit it
                         wordFromDb = dao.getWordFromDb(responseEntity.shortForm)
                         if (wordFromDb == null)
-                        //   emit(Resource.Error("The insert of the word worked, but the retrieving from DB failed"))
+                           emit(Resource.Error(ErrorTypes.DBInsertionSuccessRetrievingFailed()))
                         else {
                             emit(Resource.Success(wordFromDb.let { it!!.toWordFormsItem() }))
                             wordFromDb = null

@@ -9,16 +9,23 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import com.sebqv97.acronymapp.common.Constants
+import com.sebqv97.acronymapp.common.UseCases
 import com.sebqv97.acronymapp.common.utils.Resource
+import com.sebqv97.acronymapp.common.utils.getWordsUseCaseErrorHandler
 import com.sebqv97.acronymapp.common.utils.removeWhiteSpaces
 import com.sebqv97.acronymapp.databinding.ActivityMainBinding
 import com.sebqv97.acronymapp.domain.model.WordFormsItem
 import com.sebqv97.acronymapp.presentation.WordFormsItemViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     val tag = "State"
+    private var searchFor = ""
+    private var error:String? = null
     val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     val wordsViewModel: WordFormsItemViewModel by lazy {
         ViewModelProvider(this@MainActivity).get(
@@ -41,11 +48,15 @@ class MainActivity : AppCompatActivity() {
        // wordsViewModel.getWordForms(Constants.API_GET_LONG_FORM, "BB")//careful, UPPERCASE ONLY
 
         //Observe the data
-
-        wordsViewModel.liveWordsData.observe(this) { state ->
+        CoroutineScope(Dispatchers.Main).launch { wordsViewModel.liveWordsData.collect { state ->
             when (state) {
                 is Resource.Loading -> Log.d(tag, "DATA LOADING")
-                is Resource.Error ->{}// Log.d(tag, state.errorType)
+                is Resource.Error ->{
+                    state.errorType.let {
+                        error = getWordsUseCaseErrorHandler(it!!)
+                        updateUiWithError(error!!)
+                    }
+                }// Log.d(tag, state.errorType)
                 is Resource.Success -> {
                     Log.d(
                         tag,
@@ -55,12 +66,13 @@ class MainActivity : AppCompatActivity() {
                     updateUi(state.data!!)
                 }
             }
-        }
+        }  }
+
     }
 
     private fun searchFor() {
         var searchText:String
-        var searchFor:String= ""
+         searchFor = ""
         binding.run {
             searchText = editTextSearchWord.text.toString().uppercase().removeWhiteSpaces()
 
@@ -70,7 +82,9 @@ class MainActivity : AppCompatActivity() {
                     searchFor = Constants.API_GET_LONG_FORM
             editTextSearchWord.text.clear()
             wordName.text = searchText
-            wordsViewModel.getWordForms(queryType = searchFor, searchedWord = searchText)
+            //map use-case GetWords's data
+            val getWordsUseCase = UseCases.GetWords(queryType = searchFor, searchedWord = searchText)
+           wordsViewModel.useCaseMapper(getWordsUseCase)
 
         }
 
@@ -80,7 +94,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateUi(data: WordFormsItem) {
         val overviewPageModel = data.toOverviewPageModel()
-        val adapter = ArrayAdapter<String>(this, R.layout.list_item, overviewPageModel.longForms)
+        val adapter = if(searchFor ==Constants.API_GET_LONG_FORM)
+            ArrayAdapter<String>(this, R.layout.list_item, overviewPageModel.longForms)
+                    else {
+                        val singleWordArray = arrayListOf(data.shortForm)
+                        ArrayAdapter<String>(this,R.layout.list_item,singleWordArray)
+                    }
         binding.apply {
             listViewOverview.adapter = adapter
             listViewOverview.onItemClickListener =
@@ -101,4 +120,15 @@ class MainActivity : AppCompatActivity() {
                 }
         }
     }
+
+    private fun updateUiWithError(errorType:String){
+        //save error into field Error
+        error = errorType
+        val adapter = ArrayAdapter(this@MainActivity,R.layout.list_item,listOf(error))
+
+        binding.run { listViewOverview.adapter = adapter }
+        error = null
+
+    }
+
 }
