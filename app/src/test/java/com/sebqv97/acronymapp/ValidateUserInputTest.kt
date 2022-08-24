@@ -22,7 +22,7 @@ class ValidateUserInputTest {
 
     @Test
     fun `pass string with length 5 and length 17`(){
-       val SizeFiveString = "1ffA."
+        val SizeFiveString = "1ffA."
         val SizeSevenTeenString = "fdfdsfssdfdfds;'A2"
 
         //assert that results are false
@@ -51,7 +51,7 @@ class ValidateUserInputTest {
     fun `pass correct passwords _ expect true`(){
         val passwords = listOf("sdfsgew1;A","sdfgfhflk3/G","Adabsdf66.")
         for(password in passwords)
-        assertEquals(true, validatePassword(password))
+            assertEquals(true, validatePassword(password))
     }
 
 }
