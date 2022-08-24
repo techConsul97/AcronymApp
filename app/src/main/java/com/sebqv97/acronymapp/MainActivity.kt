@@ -1,12 +1,12 @@
 package com.sebqv97.acronymapp
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.sebqv97.acronymapp.common.Constants
 import com.sebqv97.acronymapp.common.UseCases
@@ -103,20 +103,13 @@ class MainActivity : AppCompatActivity() {
         binding.apply {
             listViewOverview.adapter = adapter
             listViewOverview.onItemClickListener =
-                object : AdapterView.OnItemClickListener {
-
-                    override fun onItemClick(
-                        parent: AdapterView<*>, view: View,
-                        position: Int, id: Long
-                    ) {
-                        val tappedString = overviewPageModel.longForms[position]
-                        for(longForm in data.longForms){
+                AdapterView.OnItemClickListener { parent, view, position, id ->
+                    val tappedString = overviewPageModel.longForms[position]
+                    for(longForm in data.longForms){
                         while(longForm.getCurrentLongForm(tappedString)==null){}
-                        }
-                        val wordInfo = data.longForms
-                        Toast.makeText(this@MainActivity,tappedString,Toast.LENGTH_SHORT).show()
-
                     }
+                    val wordInfo = data.longForms
+                    Toast.makeText(this@MainActivity,tappedString,Toast.LENGTH_SHORT).show()
                 }
         }
     }
