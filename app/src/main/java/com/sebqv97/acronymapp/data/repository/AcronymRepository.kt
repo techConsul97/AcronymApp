@@ -22,14 +22,26 @@ class AcronymRepository @Inject constructor(
     val dao:AcronymDao
 ) : IAcronymRepository {
      var wordFromDb:WordFormsEntity? = null
+    var  retainedShortFormAfterInsertion  = mutableListOf<List<String>>()
+    var found = false
     override suspend fun getWordsFromDataSource(queryType:String,searchedWord:String): Flow<Resource<WordFormsItem>> = flow{
         emit(Resource.Loading())
         //try and get it from the database
-        wordFromDb = dao.getWordFromDb(searchedWord)
-         Log.d("WordFromDb",wordFromDb.toString())
-        if(wordFromDb != null){
-            emit(Resource.Success(data = wordFromDb!!.toWordFormsItem()))
-        }else{
+        for(longFormList in retainedShortFormAfterInsertion){
+            if(longFormList.indexOf(searchedWord)> -1) {
+                wordFromDb = dao.getWordFromDb(searchedWord)
+                if (wordFromDb != null) {
+                    emit(Resource.Success(data = wordFromDb!!.toWordFormsItem()))
+                    Log.d("WordFromDb", wordFromDb.toString())
+                    found = true
+                    break
+                }
+            }
+        }
+
+
+
+        if(found == false){
             try {
                 val responseEntity:WordFormsEntity
                 val apiResponse = when(queryType){
@@ -44,6 +56,7 @@ class AcronymRepository @Inject constructor(
                             //insert the new data to dataBase
                             responseEntity = it!![0].toWordEntity()
                             dao.insertWordForms(responseEntity)
+                            retainedShortFormAfterInsertion.add(responseEntity.longForms.map { it.getLongForms() })
                         }
 
                         //after insert, as we want to stay with the Single-Source-Trush principle, look again in the db and transmit it
@@ -65,6 +78,7 @@ class AcronymRepository @Inject constructor(
                 emit(Resource.Error(ErrorTypes.InternetConnectionFailed()))
             }
         }
+        found = false
     }
 
 
